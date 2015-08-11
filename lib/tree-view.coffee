@@ -90,6 +90,11 @@ class TreeView extends View
       return if e.target.classList.contains('entries')
 
       @entryClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
+    @on 'dblclick', '.entry', (e) =>
+      # This prevents accidental collapsing when a .entries element is the event target
+      return if e.target.classList.contains('entries')
+
+      @entryDblClicked(e) unless e.shiftKey or e.metaKey or e.ctrlKey
     @on 'mousedown', '.entry', (e) =>
       @onMouseDown(e)
 
@@ -191,17 +196,18 @@ class TreeView extends View
 
   entryClicked: (e) ->
     entry = e.currentTarget
-    isRecursive = e.altKey or false
-    switch e.originalEvent?.detail ? 1
-      when 1
+    if entry instanceof DirectoryView && e.offsetX <= 10
+        isRecursive = e.altKey or false
         @selectEntry(entry)
-        @openSelectedEntry(false) if entry instanceof FileView
-        entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
-      when 2
-        if entry instanceof FileView
-          @unfocus()
-        else if DirectoryView
-          entry.toggleExpansion(isRecursive)
+        entry.toggleExpansion(isRecursive)
+        e.stopPropagation();
+
+  entryDblClicked: (e) ->
+    entry = e.currentTarget
+    isRecursive = e.altKey or false
+    @selectEntry(entry)
+    @openSelectedEntry(false) if entry instanceof FileView
+    entry.toggleExpansion(isRecursive) if entry instanceof DirectoryView
 
     false
 
